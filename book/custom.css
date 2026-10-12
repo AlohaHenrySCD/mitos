@@ -10,187 +10,107 @@
     "Liberation Mono", monospace;
 }
 
-/* Modus Operandi — runtime/themes/modus_operandi.toml */
+/* A small documentation palette, using the editor's Modus neutrals. */
 .light,
 html:not(.js) {
   --color-scheme: light;
   --bg: #ffffff;
   --fg: #000000;
-  --full-contrast: #000000;
-  --title-color: #000000;
-
+  --surface: #f2f2f2;
+  --surface-hover: #e0e0e0;
+  --muted: #595959;
   --border: #c4c4c4;
-  --border-light: #e0e0e0;
-  --border-hover: #595959;
-  --border-footer: #e0e0e0;
-
-  --media-bg: #f2f2f2;
-  --chrome-bg: #f2f2f2;
-  --sidebar-bg: var(--chrome-bg);
-  --sidebar-fg: #000000;
-  --sidebar-non-existant: #595959;
-  --sidebar-non-existent: #595959;
-  --sidebar-active: #000000;
-  --sidebar-item-hover-bg: #e0e0e0;
-  --sidebar-active-bg: #c0deff;
-  --sidebar-spacer: #e0e0e0;
-  --sidebar-mobile-shadow: 0 16px 32px rgb(0 0 0 / 16%);
-
-  --scrollbar: #c4c4c4;
-  --icons: #595959;
-  --icons-hover: #000000;
-  --icon-btn-bg-hover: #e0e0e0;
-
   --links: #3548cf;
-  --link-line-decoration: color-mix(in srgb, var(--links) 40%, transparent);
-  --link-line-decoration-hover: color-mix(in srgb, var(--links) 80%, transparent);
-  --inline-code-color: #00663f;
-  --code-text: #000000;
-  --code-bg: #f2f2f2;
-  --keybinding-bg: #e0e0e0;
-
-  --pre-bg: #f2f2f2;
-  --pre-border: #c4c4c4;
-  --pre-shadow: rgb(0 0 0 / 8%);
-
-  --theme-popup-bg: #ffffff;
-  --theme-popup-border: #c4c4c4;
-  --theme-hover: #e0e0e0;
-  --popover-bg: #ffffff;
-  --popover-border: #c4c4c4;
-  --popover-shadow: 0 16px 40px rgb(0 0 0 / 16%);
-
-  --quote-bg: #f2f2f2;
-  --quote-border: #595959;
-  --warning-border: #6f5500;
-
-  --table-border-color: #c4c4c4;
-  --table-header-bg: #e0e0e0;
-  --table-alternate-bg: #f2f2f2;
-  --table-border-line: #e0e0e0;
-
-  --searchbar-border-color: #595959;
-  --searchbar-bg: #ffffff;
-  --searchbar-fg: #000000;
-  --searchbar-shadow-color: rgb(0 0 0 / 22%);
-  --searchresults-header-fg: #595959;
-  --searchresults-border-color: #c4c4c4;
-  --searchresults-li-bg: #f2f2f2;
-  --search-mark-bg: #fff576;
-
-  --blockquote-note-color: #0031a9;
-  --blockquote-tip-color: #006800;
-  --blockquote-important-color: #721045;
-  --blockquote-warning-color: #6f5500;
-  --blockquote-caution-color: #a60000;
-  --footnote-highlight: #721045;
-  --overlay-bg: rgb(0 0 0 / 18%);
-  --sidebar-header-border-color: #595959;
-  --syntax-comment: #595959;
-  --syntax-keyword: #531ab6;
-  --syntax-meta: #a0132f;
-  --syntax-attribute: #005e8b;
-  --syntax-builtin: #8f0075;
-  --syntax-string: #3548cf;
-  --syntax-regexp: #7c318f;
-  --syntax-constant: #0000b0;
-  --syntax-function: #721045;
-  --syntax-type: #005f5f;
-  --syntax-added: #005000;
-  --syntax-added-bg: #c1f2d1;
-  --syntax-removed: #8f1313;
-  --syntax-removed-bg: #ffd8d5;
+  --success: #006800;
+  --warning-color: #6f5500;
+  --danger: #a60000;
+  --shadow: rgb(0 0 0 / 16%);
 }
 
-/* Modus Vivendi — runtime/themes/modus_vivendi.toml */
 .colibri {
   --color-scheme: dark;
   --bg: #000000;
   --fg: #ffffff;
-  --full-contrast: #ffffff;
-  --title-color: #ffffff;
-
+  --surface: #1e1e1e;
+  --surface-hover: #303030;
+  --muted: #989898;
   --border: #535353;
-  --border-light: #303030;
-  --border-hover: #989898;
-  --border-footer: #303030;
-
-  --media-bg: #1e1e1e;
-  --chrome-bg: #1e1e1e;
-  --sidebar-bg: var(--chrome-bg);
-  --sidebar-fg: #ffffff;
-  --sidebar-non-existant: #989898;
-  --sidebar-non-existent: #989898;
-  --sidebar-active: #ffffff;
-  --sidebar-item-hover-bg: #303030;
-  --sidebar-active-bg: #2f447f;
-  --sidebar-spacer: #303030;
-  --sidebar-mobile-shadow: 0 16px 32px rgb(0 0 0 / 55%);
-
-  --scrollbar: #535353;
-  --icons: #989898;
-  --icons-hover: #ffffff;
-  --icon-btn-bg-hover: #303030;
-
   --links: #79a8ff;
+  --success: #44bc44;
+  --warning-color: #d0bc00;
+  --danger: #ff5f59;
+  --shadow: rgb(0 0 0 / 55%);
+}
+
+/* Map mdBook and component colors to the same palette in both themes. */
+.light,
+.colibri,
+html:not(.js) {
+  --full-contrast: var(--fg);
+  --title-color: var(--fg);
+  --border-light: var(--surface-hover);
+  --border-hover: var(--muted);
+  --border-footer: var(--border-light);
+
+  --media-bg: var(--surface);
+  --chrome-bg: var(--surface);
+  --sidebar-bg: var(--surface);
+  --sidebar-fg: var(--fg);
+  --sidebar-non-existant: var(--muted);
+  --sidebar-non-existent: var(--muted);
+  --sidebar-active: var(--fg);
+  --sidebar-item-hover-bg: var(--surface-hover);
+  --sidebar-active-bg: var(--surface-hover);
+  --sidebar-spacer: var(--border-light);
+  --sidebar-mobile-shadow: 0 16px 32px var(--shadow);
+
+  --scrollbar: var(--border);
+  --icons: var(--muted);
+  --icons-hover: var(--fg);
+  --icon-btn-bg-hover: var(--surface-hover);
+
   --link-line-decoration: color-mix(in srgb, var(--links) 40%, transparent);
   --link-line-decoration-hover: color-mix(in srgb, var(--links) 80%, transparent);
-  --inline-code-color: #00c06f;
-  --code-text: #ffffff;
-  --code-bg: #1e1e1e;
-  --keybinding-bg: #303030;
+  --inline-code-color: var(--fg);
+  --code-text: var(--fg);
+  --code-bg: var(--surface);
+  --keybinding-bg: var(--surface-hover);
 
-  --pre-bg: #1e1e1e;
-  --pre-border: #535353;
-  --pre-shadow: rgb(255 255 255 / 7%);
+  --pre-bg: var(--surface);
+  --pre-border: var(--border);
+  --theme-popup-bg: var(--bg);
+  --theme-popup-border: var(--border);
+  --theme-hover: var(--surface-hover);
+  --popover-bg: var(--bg);
+  --popover-border: var(--border);
+  --popover-shadow: 0 16px 40px var(--shadow);
 
-  --theme-popup-bg: #000000;
-  --theme-popup-border: #535353;
-  --theme-hover: #303030;
-  --popover-bg: #000000;
-  --popover-border: #535353;
-  --popover-shadow: 0 16px 40px rgb(0 0 0 / 55%);
+  --quote-bg: var(--surface);
+  --quote-border: var(--border);
+  --warning-border: var(--warning-color);
 
-  --quote-bg: #1e1e1e;
-  --quote-border: #989898;
-  --warning-border: #d0bc00;
+  --table-border-color: var(--border);
+  --table-header-bg: var(--surface);
+  --table-alternate-bg: var(--bg);
+  --table-border-line: var(--border-light);
 
-  --table-border-color: #535353;
-  --table-header-bg: #303030;
-  --table-alternate-bg: #1e1e1e;
-  --table-border-line: #303030;
+  --searchbar-border-color: var(--border);
+  --searchbar-bg: var(--bg);
+  --searchbar-fg: var(--fg);
+  --searchbar-shadow-color: var(--shadow);
+  --searchresults-header-fg: var(--muted);
+  --searchresults-border-color: var(--border);
+  --searchresults-li-bg: var(--surface);
+  --search-mark-bg: color-mix(in srgb, var(--links) 20%, var(--bg));
 
-  --searchbar-border-color: #989898;
-  --searchbar-bg: #000000;
-  --searchbar-fg: #ffffff;
-  --searchbar-shadow-color: rgb(255 255 255 / 18%);
-  --searchresults-header-fg: #989898;
-  --searchresults-border-color: #535353;
-  --searchresults-li-bg: #1e1e1e;
-  --search-mark-bg: #4a4000;
-
-  --blockquote-note-color: #2fafff;
-  --blockquote-tip-color: #44bc44;
-  --blockquote-important-color: #feacd0;
-  --blockquote-warning-color: #d0bc00;
-  --blockquote-caution-color: #ff5f59;
-  --footnote-highlight: #feacd0;
-  --overlay-bg: rgb(0 0 0 / 42%);
-  --sidebar-header-border-color: #989898;
-  --syntax-comment: #989898;
-  --syntax-keyword: #b6a0ff;
-  --syntax-meta: #ff7f86;
-  --syntax-attribute: #00d3d0;
-  --syntax-builtin: #f78fe7;
-  --syntax-string: #79a8ff;
-  --syntax-regexp: #caa6df;
-  --syntax-constant: #00bcff;
-  --syntax-function: #feacd0;
-  --syntax-type: #6ae4b9;
-  --syntax-added: #a0e0a0;
-  --syntax-added-bg: #00381f;
-  --syntax-removed: #ffbfbf;
-  --syntax-removed-bg: #4f1119;
+  --blockquote-note-color: var(--links);
+  --blockquote-tip-color: var(--success);
+  --blockquote-important-color: var(--links);
+  --blockquote-warning-color: var(--warning-color);
+  --blockquote-caution-color: var(--danger);
+  --footnote-highlight: var(--links);
+  --overlay-bg: var(--shadow);
+  --sidebar-header-border-color: var(--border);
 }
 
 html {
@@ -446,7 +366,13 @@ input:focus-visible {
   overflow-y: visible;
 }
 
+/* Pages without section headings do not need a TOC column. */
+.content:has(.toc-container[hidden]) {
+  grid-template-columns: minmax(0, var(--content-max-width));
+}
+
 .content main {
+  min-width: 0;
   width: 100%;
   max-width: var(--content-max-width);
   margin: 0;
@@ -604,38 +530,34 @@ input:focus-visible {
 table {
   width: 100%;
   margin: 0;
-  border-collapse: collapse;
+  font-size: 1.4rem;
+  line-height: 1.5;
 }
 
-table thead {
-  background: var(--table-header-bg);
+/* Let dense references scroll before their descriptions become narrow strips. */
+table:has(th:nth-child(3)) {
+  min-width: 640px;
 }
 
-table thead tr,
-table thead th,
-table td {
-  padding: 6px 12px;
+table thead tr {
   border: 0;
 }
 
 table th,
 table td {
   padding: 6px 12px;
+  border: 0;
   text-align: left;
   vertical-align: top;
 }
 
 table th {
-  color: var(--full-contrast);
+  color: var(--fg);
   font-weight: 600;
 }
 
 table tbody tr {
   border-top: 1px solid var(--table-border-line);
-}
-
-table tbody tr:nth-child(2n) {
-  background: var(--table-alternate-bg);
 }
 
 blockquote,
@@ -675,7 +597,6 @@ pre {
   border: 1px solid var(--pre-border);
   border-radius: 4px;
   background-color: var(--pre-bg);
-  box-shadow: 4px 4px 0 var(--pre-shadow);
 }
 
 pre,
@@ -767,7 +688,7 @@ pre>.buttons button {
   margin-left: auto;
 }
 
-/* Syntax colors mirror the editor theme scopes. */
+/* Syntax uses ordinary text, muted comments, and the link accent. */
 :where(.light, .colibri, html:not(.js)) .hljs {
   color: var(--fg);
   background: transparent;
@@ -777,73 +698,49 @@ pre>.buttons button {
 :where(.light, .colibri, html:not(.js)) .hljs-quote,
 :where(.light, .colibri, html:not(.js)) .hljs-operator,
 :where(.light, .colibri, html:not(.js)) .hljs-punctuation {
-  color: var(--syntax-comment);
+  color: var(--muted);
 }
 
 :where(.light, .colibri, html:not(.js)) .hljs-keyword,
 :where(.light, .colibri, html:not(.js)) .hljs-name,
 :where(.light, .colibri, html:not(.js)) .hljs-selector-tag,
-:where(.light, .colibri, html:not(.js)) .hljs-tag {
-  color: var(--syntax-keyword);
-}
-
-:where(.light, .colibri, html:not(.js)) .hljs-meta {
-  color: var(--syntax-meta);
+:where(.light, .colibri, html:not(.js)) .hljs-tag,
+:where(.light, .colibri, html:not(.js)) .hljs-meta,
+:where(.light, .colibri, html:not(.js)) .hljs-built_in,
+:where(.light, .colibri, html:not(.js)) .hljs-symbol,
+:where(.light, .colibri, html:not(.js)) .hljs-string,
+:where(.light, .colibri, html:not(.js)) .hljs-bullet,
+:where(.light, .colibri, html:not(.js)) .hljs-link,
+:where(.light, .colibri, html:not(.js)) .hljs-regexp,
+:where(.light, .colibri, html:not(.js)) .hljs-formula,
+:where(.light, .colibri, html:not(.js)) .hljs-number,
+:where(.light, .colibri, html:not(.js)) .hljs-literal {
+  color: var(--links);
 }
 
 :where(.light, .colibri, html:not(.js)) .hljs-attribute,
 :where(.light, .colibri, html:not(.js)) .hljs-attr,
 :where(.light, .colibri, html:not(.js)) .hljs-property,
-:where(.light, .colibri, html:not(.js)) .hljs-params {
-  color: var(--syntax-attribute);
-}
-
-:where(.light, .colibri, html:not(.js)) .hljs-built_in,
-:where(.light, .colibri, html:not(.js)) .hljs-symbol {
-  color: var(--syntax-builtin);
-}
-
-:where(.light, .colibri, html:not(.js)) .hljs-string,
-:where(.light, .colibri, html:not(.js)) .hljs-bullet,
-:where(.light, .colibri, html:not(.js)) .hljs-link {
-  color: var(--syntax-string);
-}
-
-:where(.light, .colibri, html:not(.js)) .hljs-regexp,
-:where(.light, .colibri, html:not(.js)) .hljs-formula {
-  color: var(--syntax-regexp);
-}
-
-:where(.light, .colibri, html:not(.js)) .hljs-number,
-:where(.light, .colibri, html:not(.js)) .hljs-literal {
-  color: var(--syntax-constant);
-}
-
+:where(.light, .colibri, html:not(.js)) .hljs-params,
 :where(.light, .colibri, html:not(.js)) .hljs-title,
-:where(.light, .colibri, html:not(.js)) .hljs-section {
-  color: var(--syntax-function);
-}
-
+:where(.light, .colibri, html:not(.js)) .hljs-section,
 :where(.light, .colibri, html:not(.js)) .hljs-type,
 :where(.light, .colibri, html:not(.js)) .hljs-class,
 :where(.light, .colibri, html:not(.js)) .hljs-selector-id,
-:where(.light, .colibri, html:not(.js)) .hljs-selector-class {
-  color: var(--syntax-type);
-}
-
+:where(.light, .colibri, html:not(.js)) .hljs-selector-class,
 :where(.light, .colibri, html:not(.js)) .hljs-variable,
 :where(.light, .colibri, html:not(.js)) .hljs-template-variable {
-  color: var(--code-text);
+  color: var(--fg);
 }
 
 :where(.light, .colibri, html:not(.js)) .hljs-addition {
-  color: var(--syntax-added);
-  background: var(--syntax-added-bg);
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
 }
 
 :where(.light, .colibri, html:not(.js)) .hljs-deletion {
-  color: var(--syntax-removed);
-  background: var(--syntax-removed-bg);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
 }
 
 .hljs-emphasis {
