@@ -1,22 +1,33 @@
-name: |
-  Update Nix grammar lock file
+name: Nix grammar lockfile
 on:
+  pull_request:
+    paths:
+      - languages.toml
+      - nix/grammar-sources.json
+      - 'xtask/**'
+      - .github/workflows/nix-grammars.yml
   push:
     branches:
       - main
     paths:
       - languages.toml
+      - nix/grammar-sources.json
+      - 'xtask/**'
+      - .github/workflows/nix-grammars.yml
+  merge_group:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  update-nix-grammars:
-    name: Update Nix Grammars
+  check-nix-grammars:
+    name: Check Nix Grammars
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/rust-setup
         with:
@@ -30,13 +41,8 @@ jobs:
         run: |
           cargo xtask update-nix-grammar-sources
 
-      - name: Update Nix tree-sitter grammars
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          disable_globbing: true
-          commit_message: |
-            [Automated] Nix grammar lockfile update
-          file_pattern: |
-            nix/grammar-sources.json
-
-
+      - name: Check uncommitted Nix grammar lockfile changes
+        run: |
+          git diff --exit-code -- nix/grammar-sources.json \
+            || (echo "Run 'cargo xtask update-nix-grammar-sources' with Nix installed, commit nix/grammar-sources.json and push again" \
+            && exit 1)

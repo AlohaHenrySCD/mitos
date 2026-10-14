@@ -817,9 +817,9 @@
   },
   "kcl": {
     "git": "https://github.com/KittyCAD/tree-sitter-kcl",
-    "rev": "8905e0bdbf5870b50bc3f24345f1af27746f42e8",
-    "url": "https://github.com/KittyCAD/tree-sitter-kcl/archive/8905e0bdbf5870b50bc3f24345f1af27746f42e8.tar.gz",
-    "hash": "sha256-j7jqXPSWrEQNSgSMXUrcI0Wk+qsgOUK9Sh+MXXKrvqk="
+    "rev": "f96734a2a1f097f382d99fcf8e83e813ddbefaa3",
+    "url": "https://github.com/KittyCAD/tree-sitter-kcl/archive/f96734a2a1f097f382d99fcf8e83e813ddbefaa3.tar.gz",
+    "hash": "sha256-SW/0VALrLage7omkTAKxuQB23vGf5ZCn8jf7JfoXqJc="
   },
   "kconfig": {
     "git": "https://github.com/tree-sitter-grammars/tree-sitter-kconfig",
@@ -1334,8 +1334,8 @@
   "rpmspec": {
     "git": "https://gitlab.com/cryptomilk/tree-sitter-rpmspec",
     "rev": "7d1557162655f677729dca90cc180aca657053ec",
-    "url": "https://gitlab.com/cryptomilk/tree-sitter-rpmspec/-/archive/7d1557162655f677729dca90cc180aca657053ec/tree-sitter-rpmspec-7d1557162655f677729dca90cc180aca657053ec.tar.gz",
-    "hash": "sha256-9iQO3V+WtRdNQ25GyEjQDwa0NVsCOYJAYaAnw9ZuGCE="
+    "url": "https://gitlab.com/api/v4/projects/cryptomilk%2Ftree-sitter-rpmspec/repository/archive.tar.gz?sha=7d1557162655f677729dca90cc180aca657053ec",
+    "hash": "sha256-m6iX6Kwe0araL1W8/m2EbOIMaNjmFMKsxJyBAzXh4DE="
   },
   "rshtml": {
     "git": "https://github.com/rshtml/tree-sitter-rshtml",
