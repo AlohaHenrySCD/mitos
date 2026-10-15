@@ -1,0 +1,13 @@
+model
+  schema 1.2
+
+type document
+  relations
+    define viewer: [user with check]
+
+condition check(value: int) {
+  value in [
+    1,
+    2
+  ]
+}
