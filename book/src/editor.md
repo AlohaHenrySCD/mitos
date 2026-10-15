@@ -9,6 +9,7 @@ list of every setting and default, see the [`config.toml` reference](./configura
 - [`[editor.statusline]` Section](#editorstatusline-section)
 - [`[editor.lsp]` Section](#editorlsp-section)
 - [`[terminal.launcher]` Section](#terminallauncher-section)
+- [`[editor.inline-blame]` Section](#editorinline-blame-section)
 - [`[editor.cursor.shape]` Section](#editorcursorshape-section)
 - [`[editor.file-picker]` Section](#editorfile-picker-section)
 - [`[editor.file-explorer]` Section](#editorfile-explorer-section)
@@ -224,6 +225,54 @@ Mitos automatically uses a tmux split inside tmux, a WezTerm split when its
 Unix socket is available, Windows Terminal when found on Windows, or Conhost as
 the Windows fallback. On other terminals this setting is unset unless
 configured.
+
+### `[editor.inline-blame]` Section
+
+Inline Git blame shows who last changed a line and the associated commit information at the end of the line. It is available for files tracked by Git and is hidden by default.
+
+To show blame for the current line, add this to your `config.toml`:
+
+```toml
+[editor.inline-blame]
+show = "cursor-line"
+```
+
+| Key     | Description                                | Default |
+| ------- | ------------------------------------------ | ------- |
+| `show` | Which lines display inline blame | `"never"` |
+| `format` | Text shown in the blame message | `"{author}, {time-ago} • {title} • {commit}"` |
+
+`show` can be one of the following:
+
+- `"all-lines"`: Display blame on all visible nonempty lines.
+- `"cursor-line"`: Display blame on the primary cursor's line.
+- `"never"`: Hide inline blame.
+
+Press `Space + B` to toggle inline blame off and on. The toggle preserves your choice of `"all-lines"` or `"cursor-line"`. If you have not chosen a display mode, turning it on uses `"cursor-line"`.
+
+Blank lines and lines with uncommitted changes do not show inline blame.
+
+To show the current line's blame in the status area, run `blame_line` from the command palette (`Space + ?`).
+
+#### `format`
+
+Use `format` to choose which commit details appear in the blame message. For example:
+
+```toml
+[editor.inline-blame]
+show = "cursor-line"
+format = "{author}: {title}"
+```
+
+The following placeholders are available:
+
+- `{author}`: Commit author name.
+- `{date}`: Commit author date.
+- `{time-ago}`: Relative time since the commit.
+- `{title}`: Commit title.
+- `{body}`: Commit body.
+- `{commit}`: Abbreviated commit hash.
+- `{email}`: Commit author email.
 
 ### `[editor.cursor.shape]` Section
 
