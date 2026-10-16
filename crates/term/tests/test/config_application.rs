@@ -501,20 +501,26 @@ async fn migration_rejects_unsaved_config_opened_through_symlink() -> anyhow::Re
     let alias = root.join("config-link.toml");
     std::os::unix::fs::symlink(&user, &alias)?;
     let mut app = AppBuilder::new().with_file(&alias, None).build()?;
-    super::helpers::test_key_sequence(
+    super::helpers::test_key_sequences(
         &mut app,
-        Some("i# unsaved<esc>:config-migrate<ret><down><ret>"),
-        Some(&|app| {
-            assert!(view::current_ref!(app.editor).1.is_modified());
-            assert!(app
-                .editor
-                .get_status()
-                .unwrap()
-                .0
-                .contains("unsaved configuration changes"));
-            assert_eq!(std::fs::read_to_string(&user).unwrap(), original);
-            assert!(!user.with_extension("toml.bak").exists());
-        }),
+        vec![
+            // Let the asynchronous confirmation dialog open before accepting it.
+            (Some("i# unsaved<esc>:config-migrate<ret>"), None),
+            (
+                Some("<down><ret>"),
+                Some(&|app: &term::application::Application| {
+                    assert!(view::current_ref!(app.editor).1.is_modified());
+                    assert!(app
+                        .editor
+                        .get_status()
+                        .unwrap()
+                        .0
+                        .contains("unsaved configuration changes"));
+                    assert_eq!(std::fs::read_to_string(&user).unwrap(), original);
+                    assert!(!user.with_extension("toml.bak").exists());
+                }),
+            ),
+        ],
         false,
     )
     .await
