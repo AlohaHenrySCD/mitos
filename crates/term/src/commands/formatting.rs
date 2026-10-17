@@ -1,146 +1,31 @@
-//! Range-formatting requests and formatting-result callbacks.
+//! Terminal scheduling and error presentation for shared formatting operations.
 
 use super::context::Context;
-use crate::job::{self, Callback};
-use editor_core::{indent::IndentStyle, syntax::config::LanguageServerFeature, Transaction};
-use std::future::Future;
-use view::{document::FormatterError, DocumentId, ViewId};
+use crate::job::Callback;
+use view::features::formatting::{self, FormattingTask};
 
 pub(super) fn format_selections(cx: &mut Context) {
-    use lsp_client::{lsp, util::range_to_lsp_range};
-
-    let (view, doc) = current!(cx.editor);
-    let view_id = view.id;
-
-    // via lsp if available
-    // TODO: else via tree-sitter indentation calculations
-
-    if doc.selection(view_id).len() != 1 {
-        cx.editor
-            .set_error(|| "format_selections only supports a single selection for now");
-        return;
+    let view = current_ref!(cx.editor).0.id;
+    match formatting::prepare_selections(cx.editor, view) {
+        Ok(task) => cx.jobs.callback(format_callback(task)),
+        Err(error) => cx.editor.set_error(|| error.to_string()),
     }
-
-    // TODO extra LanguageServerFeature::FormatSelections?
-    // maybe such that LanguageServerFeature::Format contains it as well
-    let Some(language_server) = doc
-        .language_servers_with_feature(LanguageServerFeature::Format)
-        .find(|ls| {
-            matches!(
-                ls.capabilities().document_range_formatting_provider,
-                Some(lsp::OneOf::Left(true) | lsp::OneOf::Right(_))
-            )
-        })
-    else {
-        cx.editor
-            .set_error(|| "No configured language server supports range formatting");
-        return;
-    };
-
-    let offset_encoding = language_server.offset_encoding();
-    let ranges: Vec<lsp::Range> = doc
-        .selection(view_id)
-        .iter()
-        .map(|range| range_to_lsp_range(doc.text(), *range, offset_encoding))
-        .collect();
-
-    // TODO: handle fails
-    // TODO: concurrent map over all ranges
-
-    let range = ranges[0];
-
-    let future = language_server
-        .text_document_range_formatting(
-            doc.identifier(),
-            range,
-            lsp::FormattingOptions {
-                tab_size: doc.tab_width() as u32,
-                insert_spaces: matches!(doc.indent_style, IndentStyle::Spaces(_)),
-                ..Default::default()
-            },
-            None,
-        )
-        .unwrap();
-
-    let text = doc.text().clone();
-    let doc_id = doc.id();
-    let doc_version = doc.version();
-
-    let callbacks = cx.editor.callback_sender().clone();
-    tokio::spawn(async move {
-        match future.await {
-            Ok(Some(res)) => {
-                let transaction =
-                    lsp_client::util::generate_transaction_from_edits(&text, res, offset_encoding);
-                callbacks
-                    .send(move |editor| {
-                        let Some(doc) = editor.document_mut(doc_id) else {
-                            return;
-                        };
-                        // Updating a desynced document causes problems with applying the transaction
-                        if doc.version() != doc_version {
-                            return;
-                        }
-                        doc.apply(&transaction, view_id);
-                    })
-                    .await
-            }
-            Err(err) => log::error!("format sections failed: {err}"),
-            Ok(None) => (),
-        }
-    });
 }
 
-// Creates an LspCallback that waits for formatting changes to be computed. When they're done,
-// it applies them, but only if the doc hasn't changed.
-//
-// TODO: provide some way to cancel this, probably as part of a more general job cancellation
-// scheme
-pub(super) async fn make_format_callback(
-    doc_id: DocumentId,
-    doc_version: i32,
-    view_id: ViewId,
-    format: impl Future<Output = Result<Transaction, FormatterError>> + Send + 'static,
-) -> anyhow::Result<job::Callback> {
-    let format = format.await;
-
-    let call: job::Callback = Callback::Editor(Box::new(move |editor| {
-        if !editor.documents.contains_key(&doc_id) || !editor.tree.contains(view_id) {
-            return;
+async fn format_callback(task: FormattingTask) -> anyhow::Result<Callback> {
+    let update = task.run().await;
+    Ok(Callback::Editor(Box::new(move |editor| {
+        if let Err(error) = update.apply(editor) {
+            editor.set_error(|| error.to_string());
         }
-
-        let scrolloff = editor.config().scroll.padding;
-        let doc = doc_mut!(editor, &doc_id);
-        let view = view_mut!(editor, view_id);
-
-        match format {
-            Ok(format) => {
-                if doc.version() == doc_version {
-                    doc.apply(&format, view.id);
-                    doc.append_changes_to_history(view);
-                    doc.detect_indent_and_line_ending();
-                    view.ensure_cursor_in_view(doc, scrolloff);
-                } else {
-                    log::info!("discarded formatting changes because the document changed");
-                }
-            }
-            Err(err) => {
-                editor.set_error(|| err.to_string());
-            }
-        }
-    }));
-
-    Ok(call)
+    })))
 }
 
 pub(super) mod typed {
-    //! Typable formatting commands.
+    use super::{format_callback, formatting};
+    use crate::{compositor, ui::PromptEvent};
+    use command_line::Args;
 
-    use crate::{commands::formatting::make_format_callback, compositor, ui::PromptEvent};
-    use ::command_line::Args;
-    use anyhow::Context as _;
-
-    #[cold]
     pub(in crate::commands) fn format(
         cx: &mut compositor::Context,
         _args: Args,
@@ -149,14 +34,9 @@ pub(super) mod typed {
         if event != PromptEvent::Validate {
             return Ok(());
         }
-
-        let (view, doc) = current_ref!(cx.editor);
-        let format = doc.format(cx.editor).context(
-            "A formatter isn't available, and no language server provides formatting capabilities",
-        )?;
-        let callback = make_format_callback(doc.id(), doc.version(), view.id, format);
-        cx.jobs.callback(callback);
-
+        let view = current_ref!(cx.editor).0.id;
+        let task = formatting::prepare_document(cx.editor, view)?;
+        cx.jobs.callback(format_callback(task));
         Ok(())
     }
 }
