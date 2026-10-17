@@ -875,6 +875,122 @@ async fn test_insert_with_indent() -> anyhow::Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn test_open_below_last_line_of_extended_body() -> anyhow::Result<()> {
+    // A new line past the end of an off-side body is claimed by its `@extend`
+    // scope, so it keeps the body's indent
+    test((
+        indoc! { "
+            def foo():
+                #[x|]# = 1
+            "
+        },
+        ":lang python<ret>o",
+        indoc! { "
+            def foo():
+                x = 1
+                #[\n|]#
+            "
+        },
+    ))
+    .await?;
+
+    // ...unless `@extend.prevent-once` stops the extension
+    test((
+        indoc! { "
+            def foo():
+                #[p|]#ass
+            "
+        },
+        ":lang python<ret>o",
+        indoc! { "
+            def foo():
+                pass
+            #[\n|]#
+            "
+        },
+    ))
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_open_below_closed_yuck_list() -> anyhow::Result<()> {
+    test(("(#[b|]#ox)\n", ":lang yuck<ret>o", "(box)\n#[\n|]#")).await?;
+
+    // Closing an inner list keeps the enclosing list's indentation.
+    test((
+        indoc! { "
+            (box
+              (#[l|]#abel :text \"hi\")
+            )
+        " },
+        ":lang yuck<ret>o",
+        indoc! { "
+            (box
+              (label :text \"hi\")
+              #[\n|]#
+            )
+        " },
+    ))
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_open_below_closed_amber_function() -> anyhow::Result<()> {
+    test((
+        indoc! { "
+            fun foo() {
+                echo \"hi\"
+            #[}|]#
+        " },
+        ":lang amber<ret>o",
+        indoc! { "
+            fun foo() {
+                echo \"hi\"
+            }
+            #[\n|]#
+        " },
+    ))
+    .await?;
+
+    // Closing an inner block keeps the enclosing function's indentation.
+    test((
+        indoc! { "
+            fun foo() {
+                if true {
+                    echo \"hi\"
+                #[}|]#
+            }
+        " },
+        ":lang amber<ret>o",
+        indoc! { "
+            fun foo() {
+                if true {
+                    echo \"hi\"
+                }
+                #[\n|]#
+            }
+        " },
+    ))
+    .await?;
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_insert_newline_after_last_gdscript_body_line() -> anyhow::Result<()> {
+    test((
+        "func foo():\n\tprint(#[1|]#)\n",
+        ":lang gdscript<ret>A<ret>",
+        "func foo():\n\tprint(1)\n\t#[\n|]#",
+    ))
+    .await
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn test_join_selections() -> anyhow::Result<()> {
     // normal join
     test((
