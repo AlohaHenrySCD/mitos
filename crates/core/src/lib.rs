@@ -31,7 +31,6 @@ pub mod case_conversion;
 pub mod chars;
 pub mod comment;
 pub mod diff;
-pub mod fuzzy;
 pub mod graphemes;
 pub mod highlight;
 pub mod increment;
