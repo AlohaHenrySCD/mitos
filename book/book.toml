@@ -16,3 +16,13 @@ sidebar-header-nav = false
 
 [output.html.search]
 use-boolean-and = true
+
+[output.html.redirect]
+"package-managers.html" = "install.html#package-managers"
+"ecosystem.html" = "other-software.html"
+"language-server-setup.html" = "lsp.html"
+
+[output.linkcheck2]
+optional = true
+follow-web-links = false
+warning-policy = "error"

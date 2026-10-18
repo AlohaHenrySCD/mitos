@@ -17,6 +17,22 @@ Serve `book/site/` with any static file server to preview the landing page and
 documentation together. Running `mdbook serve book` remains useful when working
 only on documentation.
 
+To check local documentation links during `mdbook build` or the site build,
+install the mdBook backend:
+
+```sh
+cargo +stable install mdbook-linkcheck2 --version 0.12.2 --locked
+```
+
+The checker is optional for local and deployment builds and required by the
+Book workflow. It checks local file links without contacting external sites;
+heading anchors and TOML examples are not checked. With multiple backends,
+plain `mdbook build book` writes HTML under `book/book/html/`; the site script
+keeps it at `site/docs/`.
+
+Command and language tables under `src/generated/` come from `cargo xtask docgen`;
+edit their Rust metadata or `languages.toml` source before regenerating them.
+
 The site build also publishes `/install.sh`, `/install.ps1`, and `/checksums/`.
 Installers download binaries from GitHub Releases. New releases include
 `SHA256SUMS`; `0.1.0` uses the checked-in manifest from GitHub's asset digests.
