@@ -13,7 +13,7 @@ Mitos is a modern, batteries-included, modal text editor written in Rust. It is 
 
 ## Why Fork Helix?
 
-Helix built a strong foundation. Mitos is a chance to build on it at a faster pace, experiment with new features and different approaches to the architecture, and see where it can take us. For now, expect last stability and occasional breaking changes. Nevertheless, the end goal is similar - fast, robust, and extensible editor for all your needs.
+Helix built a strong foundation. Mitos is a chance to build on it at a faster pace, experiment with new features and different approaches to the architecture, and see where it can take us. For now, expect less stability and occasional breaking changes. Nevertheless, the end goal is similar - fast, robust, and extensible editor for all your needs.
 
 ## Features
 
