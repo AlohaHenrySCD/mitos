@@ -27,9 +27,9 @@ Mitos aims to be a fast, robust, and batteries-included editor. It should work w
 
 # AI Use
 
-LLM use for contributions **is fine** but we still expect you to self-review, understand the changes, and be able to explain the change-set. If you are new to Rust or this project, consider first opening an issue or discussion so we can discuss the desired change(s) before you commit your time.
+AI-assisted code is welcome. Understand, review, and test your changes, and communicate in your own voice. Read the [AI policy](./AI_POLICY.md) before contributing.
 
-LLM use for issues, docs, and threads on PRs is **not fine**. Please don't be a [Meat Proxy](https://meatproxy.me/). You can use LLMs to explore, ask for explanations, or help you debug issues but we require the final text to be yours.
+If you are new to Rust or this project, consider first opening an issue or discussion so we can discuss the desired changes before you commit your time.
 
 # Documentation
 

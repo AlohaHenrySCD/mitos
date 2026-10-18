@@ -56,6 +56,10 @@ cargo build --release
 
 The optimized executable is written to `target/release/ms` (`ms` is short for Mitos). Install it on your `PATH` with `cargo install --path crates/term --locked`.
 
+## AI Policy
+
+AI-assisted code is welcome. You are responsible for understanding, reviewing, and testing what you submit. Write discussions and opinions in your own voice. See the [AI policy](./AI_POLICY.md) for details.
+
 ---
 
 Mitos is a fork of [Helix](https://github.com/helix-editor/helix). The fork was created from commit `f9928f57f` and retains the complete upstream Git history.
