@@ -141,6 +141,11 @@ query filenames and display labels to health reporting and generated language do
 compositor; frontends supply callback delivery and presentation. Presentation-related
 model data, such as view geometry, theme styles, and gutter settings, remains shared.
 
+`view::document::file` owns file identity, cached paths, encoding, saved state,
+and open/save/reload operations. File metadata stays private to that module;
+renames invalidate path caches and external-change state together. Text and undo
+history continue to belong to `buffer`.
+
 ### Mode transitions
 
 `Editor::set_mode` in `editor/mode.rs` owns mode changes, feature cancellation,
