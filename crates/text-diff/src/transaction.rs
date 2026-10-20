@@ -50,15 +50,23 @@ impl ChangeSetBuilder<'_> {
                     if after.start == 0 {
                         fragment = self.after.to_string().into();
                     } else {
-                        let start = self.after.line_to_char(after.start as usize);
+                        let start = self
+                            .after
+                            .line_to_byte_idx(after.start as usize, stdx::rope::LINE_TYPE);
                         fragment = self.after.slice(start..).to_string().into();
                     }
                 } else if after.start == 0 {
-                    let end = self.after.line_to_char(after.end as usize);
+                    let end = self
+                        .after
+                        .line_to_byte_idx(after.end as usize, stdx::rope::LINE_TYPE);
                     fragment = self.after.slice(..end).to_string().into();
                 } else {
-                    let start = self.after.line_to_char(after.start as usize);
-                    let end = self.after.line_to_char(after.end as usize);
+                    let start = self
+                        .after
+                        .line_to_byte_idx(after.start as usize, stdx::rope::LINE_TYPE);
+                    let end = self
+                        .after
+                        .line_to_byte_idx(after.end as usize, stdx::rope::LINE_TYPE);
                     fragment = self.after.slice(start..end).to_string().into();
                 }
             } else {
@@ -124,15 +132,15 @@ struct RopeLines<'a>(RopeSlice<'a>);
 
 impl<'a> imara_diff::TokenSource for RopeLines<'a> {
     type Token = RopeSlice<'a>;
-    type Tokenizer = ropey::iter::Lines<'a>;
+    type Tokenizer = std::iter::Map<ropey::iter::Lines<'a>, fn(RopeSlice<'a>) -> RopeSlice<'a>>;
 
     fn tokenize(&self) -> Self::Tokenizer {
-        self.0.lines()
+        self.0.lines(stdx::rope::LINE_TYPE).map(super::line_token)
     }
 
     fn estimate_tokens(&self) -> u32 {
         // we can provide a perfect estimate which is very nice for performance
-        self.0.len_lines() as u32
+        self.0.len_lines(stdx::rope::LINE_TYPE) as u32
     }
 }
 
@@ -185,6 +193,19 @@ mod tests {
             let new = Rope::from(b);
             compare_ropes(&old, &new).apply(&mut old);
             old == new
+        }
+    }
+
+    #[test]
+    fn large_unicode_insertions_preserve_prefixes_and_suffixes() {
+        let lines: Vec<_> = (0..1200).map(|i| format!("{i} α😀 café\r\n")).collect();
+        let original = lines.concat();
+        let inserted = "inserted 界👩🏽‍💻\r\n".repeat(1024);
+        test_identity("", &inserted);
+        for line in [0, 600, 1200] {
+            let prefix = lines[..line].concat();
+            let suffix = lines[line..].concat();
+            test_identity(&original, &format!("{prefix}{inserted}{suffix}"));
         }
     }
 

@@ -30,9 +30,12 @@ impl InternedRopeLines {
     pub fn new(diff_base: Rope, doc: Rope) -> InternedRopeLines {
         let mut res = InternedRopeLines {
             interned: InternedInput {
-                before: Vec::with_capacity(diff_base.len_lines()),
-                after: Vec::with_capacity(doc.len_lines()),
-                interner: Interner::new(diff_base.len_lines() + doc.len_lines()),
+                before: Vec::with_capacity(diff_base.len_lines(stdx::rope::LINE_TYPE)),
+                after: Vec::with_capacity(doc.len_lines(stdx::rope::LINE_TYPE)),
+                interner: Interner::new(
+                    diff_base.len_lines(stdx::rope::LINE_TYPE)
+                        + doc.len_lines(stdx::rope::LINE_TYPE),
+                ),
             },
             diff_base: Box::new(diff_base),
             doc: Box::new(doc),
@@ -89,10 +92,11 @@ impl InternedRopeLines {
         // `self.diff_base` is only changed in `self.update_diff_base`, which clears the interner.
         // When the interned lines are exposed to consumer in `self.diff_input`, the lifetime is bounded to a reference to self.
         // That means that on calls to update there exist no references to `self.interned`.
-        let before = self
-            .diff_base
-            .lines()
-            .map(|line: RopeSlice| -> RopeSlice<'static> { unsafe { transmute(line) } });
+        let before = self.diff_base.lines(stdx::rope::LINE_TYPE).map(
+            |line: RopeSlice| -> RopeSlice<'static> {
+                unsafe { transmute(super::line_token(line)) }
+            },
+        );
         self.interned.update_before(before);
         self.num_tokens_diff_base = self.interned.interner.num_tokens();
         // the has to be interned again because the interner was fully cleared
@@ -106,10 +110,12 @@ impl InternedRopeLines {
         // `self.doc` is only changed in `self.update_doc`, which clears the interner.
         // When the interned lines are exposed to consumer in `self.diff_input`, the lifetime is bounded to a reference to self.
         // That means that on calls to update there exist no references to `self.interned`.
-        let after = self
-            .doc
-            .lines()
-            .map(|line: RopeSlice| -> RopeSlice<'static> { unsafe { transmute(line) } });
+        let after =
+            self.doc
+                .lines(stdx::rope::LINE_TYPE)
+                .map(|line: RopeSlice| -> RopeSlice<'static> {
+                    unsafe { transmute(super::line_token(line)) }
+                });
         self.interned.update_after(after);
     }
 
@@ -119,10 +125,10 @@ impl InternedRopeLines {
         // diff itself (the diff performance only depends on the number of tokens)
         // the interning runtime depends mostly on filesize and is actually dominant
         // for large files
-        self.doc.len_lines() > MAX_DIFF_LINES
-            || self.diff_base.len_lines() > MAX_DIFF_LINES
-            || self.doc.len_bytes() > MAX_DIFF_BYTES
-            || self.diff_base.len_bytes() > MAX_DIFF_BYTES
+        self.doc.len_lines(stdx::rope::LINE_TYPE) > MAX_DIFF_LINES
+            || self.diff_base.len_lines(stdx::rope::LINE_TYPE) > MAX_DIFF_LINES
+            || self.doc.len() > MAX_DIFF_BYTES
+            || self.diff_base.len() > MAX_DIFF_BYTES
     }
 
     /// Returns the `InternedInput` for performing the diff.
