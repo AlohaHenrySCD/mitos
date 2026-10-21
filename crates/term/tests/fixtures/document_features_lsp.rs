@@ -27,6 +27,21 @@ fn main() -> anyhow::Result<()> {
     let mut diagnostic_requests = HashMap::<(String, i64), usize>::new();
     // Optional modes expose only the feature under test.
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "--echo") {
+        io::copy(&mut input, &mut output)?;
+        return Ok(());
+    }
+    if args.first().is_some_and(|arg| arg == "--format") {
+        // Consume the document before exiting so the editor never hits a broken pipe.
+        io::copy(&mut input, &mut io::sink())?;
+        output.write_all(b"new content\n")?;
+        return Ok(());
+    }
+    if args.first().is_some_and(|arg| arg == "--hang") {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(60));
+        }
+    }
     let file_operations = args.first().is_some_and(|arg| arg == "--file-operations");
     let rename = args.first().is_some_and(|arg| arg == "--rename");
     let workspace_symbols = args.first().is_some_and(|arg| arg == "--workspace-symbols");
@@ -44,6 +59,10 @@ fn main() -> anyhow::Result<()> {
     let signature_help = args.first().is_some_and(|arg| arg == "--signature-help");
     let inline_completion = args.first().is_some_and(|arg| arg == "--inline-completion");
     let completion = args.first().is_some_and(|arg| arg == "--completion");
+    let formatting_callback = args
+        .first()
+        .is_some_and(|arg| arg == "--formatting-callback");
+    let mut pending_format = None;
     let lifecycle = args.first().is_some_and(|arg| arg == "--lifecycle");
     let mut request_log = if file_operations
         || rename
@@ -174,6 +193,31 @@ fn main() -> anyhow::Result<()> {
             }
             "exit" => return Ok(()),
             _ => {}
+        }
+        if formatting_callback && message["id"] == "format-config" && !message["method"].is_string()
+        {
+            let (id, indent) = pending_format.take().unwrap();
+            respond(
+                &mut output,
+                json!({"jsonrpc": "2.0", "id": id,
+                "result": [{"range": {"start": {"line": 0, "character": 0},
+                    "end": {"line": 1, "character": 0}},
+                    "newText": format!("{}formatted\n", " ".repeat(indent))}]}),
+            )?;
+            continue;
+        }
+        if formatting_callback && method == "textDocument/formatting" {
+            pending_format = Some((
+                message["id"].clone(),
+                params["options"]["tabSize"].as_u64().unwrap() as usize,
+            ));
+            // Like yaml-language-server, do not finish until the editor replies.
+            respond(
+                &mut output,
+                json!({"jsonrpc": "2.0", "id": "format-config",
+                "method": "workspace/configuration", "params": {"items": [{"section": "[yaml]", "scopeUri": uri}]}}),
+            )?;
+            continue;
         }
         // Client replies to server requests are logged, but need no response.
         if !message["method"].is_string() {
@@ -721,6 +765,9 @@ fn main() -> anyhow::Result<()> {
                 "positionEncoding": "utf-16", "textDocumentSync": 1,
                 "inlineCompletionProvider": true,
                 "completionProvider": {"resolveProvider": true}
+            }}),
+            "initialize" if formatting_callback => json!({"capabilities": {
+                "textDocumentSync": 1, "documentFormattingProvider": true
             }}),
             "initialize" if completion => json!({"capabilities": {
                 "positionEncoding": "utf-16", "textDocumentSync": 1,

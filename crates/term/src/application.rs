@@ -98,6 +98,7 @@ impl Application {
         S: Stream<Item = std::io::Result<TerminalEvent>> + Unpin,
     {
         loop {
+            self.jobs.run_after_writes(&mut self.editor);
             if self.editor.should_close() {
                 return false;
             }
@@ -165,6 +166,7 @@ impl Application {
                         // schedule spelling checks. Selection shell results must also settle before
                         // command assertions inspect their edits. Completions arrive via jobs.
                         if _idle_handled
+                            && self.jobs.wait_futures.is_empty()
                             && !self.editor.has_pending_writes()
                             && !self.editor.has_pending_shell_filters()
                             && !self.jobs.command_expansion.is_running()
@@ -359,18 +361,36 @@ impl Application {
         //        errors along the way
         let mut errs = Vec::new();
 
-        if let Err(err) = self
-            .jobs
-            .finish(&mut self.editor, Some(&mut self.compositor))
-            .await
-        {
-            log::error!("Error executing job: {}", err);
-            errs.push(err);
-        };
-
-        if let Err(err) = self.editor.flush_writes().await {
-            log::error!("Error writing: {}", err);
-            errs.push(err);
+        // Continue serving formatter/code-action callbacks while all accepted saves drain.
+        // A failed operation must not abandon unrelated accepted jobs or writes.
+        self.jobs.cancel_after_writes();
+        while !self.jobs.wait_futures.is_empty() || self.editor.has_pending_writes() {
+            use futures_util::StreamExt;
+            use view::editor::EditorEvent;
+            tokio::select! {
+                result = async {
+                    tokio::select! {
+                        Some(result) = self.jobs.wait_futures.next() => result,
+                        Some(callback) = self.jobs.callbacks.recv() => Ok(Some(callback)),
+                    }
+                } => {
+                    match self.jobs.try_handle_callback(
+                        crate::config::Context { current: &self.config.load(), updates: &self.config_updates.0 },
+                        &mut self.editor, &mut self.compositor, result,
+                    ) {
+                        Ok(Some(job)) => self.jobs.add(job),
+                        Ok(None) => (),
+                        Err(error) => errs.push(error),
+                    }
+                }
+                event = self.editor.wait_event() => {
+                    if let EditorEvent::DocumentSaved(Err(error)) = event {
+                        errs.push(error);
+                    } else {
+                        self.handle_editor_event(event).await;
+                    }
+                }
+            }
         }
 
         self.editor.close_language_servers(None).await;
@@ -378,3 +398,6 @@ impl Application {
         errs
     }
 }
+
+#[cfg(all(test, feature = "integration"))]
+mod save_tests;
