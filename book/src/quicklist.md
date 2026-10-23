@@ -1,7 +1,9 @@
 # Quicklist
 
-The quicklist keeps a picker's matched file locations available after the picker closes.
-Unlike the [jumplist](./jumplist.md), which records locations you leave, the quicklist is an explicit result set you can traverse in either direction.
+Use the quicklist to collect locations you want to revisit, then jump between them
+without reopening a search. Add locations as you edit or copy a picker's filtered
+results. Unlike the [jumplist](./jumplist.md), which records locations you leave,
+you choose what goes into the quicklist.
 
 ## Populating the quicklist
 
@@ -9,8 +11,20 @@ While a picker containing files or locations is open, press `Ctrl-q` to copy its
 The entries keep their current picker order, and the picker remains open.
 For example, you can filter global-search, diagnostics, or symbol results and capture only those matches.
 
-The quicklist is editor-global and temporary.
-Capturing entries from another picker replaces its contents; capturing a picker with no matching locations clears it.
+The quicklist is shared across all open files and lasts until you quit Mitos.
+Copying picker results replaces the list; copying a picker with no matching
+locations clears it.
+
+## Adding the current location
+
+Press `Alt-q` in normal or select mode to add the current location, including
+your selections, to the end of the list.
+The `add_to_quicklist` command is also available in the command palette (`Space ?`).
+Existing entries and the current quicklist position are kept.
+Unsaved buffers are supported too; their entries remain usable while the buffer is open.
+
+Stored locations do not follow later edits. Jumping to an entry restores the
+selection positions saved when you added it.
 
 ## Navigating entries
 
@@ -27,6 +41,24 @@ Quicklist jumps are added to the jumplist, allowing `Ctrl-o` to return to the lo
 
 The quicklist picker shows every captured entry and marks the current one with `*`.
 Selecting an entry opens it and makes it the current quicklist position.
+
+## Removing entries
+
+In the quicklist picker (`Space q`), press `Ctrl-x` to remove the highlighted entry.
+The picker stays open, keeps its filter, and selects a nearby row. This removes
+only the list entry; it does not change or close the file or buffer.
+
+Removing the current quicklist entry leaves the editor cursor in place. After
+closing the picker, `]q` visits the following remaining entry and `[q` visits the
+preceding one, wrapping as usual.
+
+To change the deletion binding, use the picker-specific `remove_entry` action:
+
+```toml
+[keys.quicklist-picker]
+C-x = "unbound"
+C-r = "remove_entry"
+```
 
 ## Typical workflow
 
