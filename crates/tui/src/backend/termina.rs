@@ -53,6 +53,20 @@ fn vte_version() -> Option<usize> {
     std::env::var("VTE_VERSION").ok()?.parse().ok()
 }
 
+// Multiplexers can flatten transparent backgrounds. Ghostty and Rex retain OSC11 overrides
+// across automatic theme changes, even after an OSC111 reset.
+fn supports_dynamic_background(
+    tmux: bool,
+    zellij: bool,
+    program: Option<&str>,
+    term: Option<&str>,
+) -> bool {
+    !tmux
+        && !zellij
+        && !matches!(program, Some("ghostty" | "rex"))
+        && !term.is_some_and(|term| term.contains("ghostty") || term.contains("rex"))
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 struct Capabilities {
     kitty_keyboard: KittyKeyboardSupport,
@@ -109,7 +123,12 @@ impl TerminaBackend {
         let start = Instant::now();
 
         // HACK: emitting OSC11 / OSC111 seems to break SGR and cause flickering in tmux.
-        capabilities.dynamic_background_color = std::env::var_os("TMUX").is_none();
+        capabilities.dynamic_background_color = supports_dynamic_background(
+            std::env::var_os("TMUX").is_some(),
+            std::env::var_os("ZELLIJ").is_some(),
+            std::env::var("TERM_PROGRAM").ok().as_deref(),
+            std::env::var("TERM").ok().as_deref(),
+        );
 
         capabilities.kitty_keyboard = match config.kitty_keyboard_protocol {
             KittyKeyboardProtocolConfig::Disabled => KittyKeyboardSupport::None,
@@ -873,7 +892,35 @@ fn color_to_termina(color: RatatuiColor) -> ColorSpec {
 
 #[cfg(test)]
 mod tests {
-    use super::write_reset_background_color;
+    use super::{supports_dynamic_background, write_reset_background_color};
+
+    #[test]
+    fn background_capability_preserves_terminal_managed_backgrounds() {
+        assert!(supports_dynamic_background(
+            false,
+            false,
+            None,
+            Some("xterm-256color")
+        ));
+        assert!(!supports_dynamic_background(true, false, None, None));
+        assert!(!supports_dynamic_background(false, true, None, None));
+        for terminal in ["ghostty", "rex"] {
+            assert!(!supports_dynamic_background(
+                false,
+                false,
+                Some(terminal),
+                Some("xterm-256color")
+            ));
+            for term in [terminal.to_owned(), format!("xterm-{terminal}")] {
+                assert!(!supports_dynamic_background(
+                    false,
+                    false,
+                    None,
+                    Some(&term)
+                ));
+            }
+        }
+    }
 
     #[test]
     fn reset_background_color_releases_the_dynamic_background() {
