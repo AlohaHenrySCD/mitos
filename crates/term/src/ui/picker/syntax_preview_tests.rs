@@ -204,11 +204,17 @@ async fn native_batches_invalidate_same_stamp_previews_and_lagged_subscribers() 
 
 #[tokio::test]
 async fn directory_previews_follow_unwatched_membership_changes() -> anyhow::Result<()> {
-    let mut fixture = Fixture::new()?;
+    let mut fixture = Fixture::with_config(|config| {
+        config.editor.files.reload.poll.interval = 100;
+    })?;
+    tokio::time::pause();
     let path = fixture.dir.path().to_owned();
     fixture.read_preview(&path);
     let child = path.join("new.txt");
     std::fs::write(&child, "new\n")?;
+    // Directory metadata may not change immediately on every filesystem.
+    // Allow the polling backstop to refresh membership without a real sleep.
+    tokio::time::advance(Duration::from_millis(100)).await;
     fixture.read_preview(&path);
     let CachedPreview::Directory(entries) = &fixture.picker().preview.preview_cache[&*path].preview
     else {
@@ -216,6 +222,7 @@ async fn directory_previews_follow_unwatched_membership_changes() -> anyhow::Res
     };
     assert!(entries.iter().any(|(path, _)| path == &child));
     std::fs::remove_file(&child)?;
+    tokio::time::advance(Duration::from_millis(100)).await;
     fixture.read_preview(&path);
     let CachedPreview::Directory(entries) = &fixture.picker().preview.preview_cache[&*path].preview
     else {
