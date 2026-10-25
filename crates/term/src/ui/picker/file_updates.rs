@@ -42,6 +42,10 @@ impl<T, D> FileUpdates<T, D> {
         self.dirty || self.pending.is_some()
     }
 
+    pub(super) fn mark_documents_refreshed(&mut self, editor: &Editor) {
+        self.changes.mark_documents_refreshed(editor);
+    }
+
     pub(super) fn stop(&mut self) {
         self.task.cancel();
         self.pending = None;
@@ -135,6 +139,9 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> Picker<T, D> {
     }
 
     pub(super) fn refresh_files(&mut self, editor: &Editor) {
+        if self.replacement_pending() {
+            return;
+        }
         use oneshot::error::TryRecvError as ResultError;
 
         let Some(mut updates) = self.file_updates.take() else {

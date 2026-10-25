@@ -10,6 +10,11 @@ pub(crate) fn items<T: Send + Sync, D>(picker: &Picker<T, D>) -> impl Iterator<I
         .map(|item| item.data)
 }
 
+pub(crate) fn all_items<T: Send + Sync, D>(picker: &Picker<T, D>) -> impl Iterator<Item = &T> {
+    let snapshot = picker.results.matcher.snapshot();
+    (0..snapshot.item_count()).filter_map(|index| snapshot.get_item(index).map(|item| item.data))
+}
+
 pub(crate) fn application(poll: bool) -> anyhow::Result<Application> {
     let mut config = AppConfig::default();
     config.editor.lsp.enable = false;
@@ -36,12 +41,26 @@ pub(crate) fn draw<T: Send + Sync, D: Send + Sync>(
     picker: &mut Picker<T, D>,
     app: &mut Application,
 ) {
-    let config = AppConfig::default();
+    frame(picker, app);
+}
+
+pub(crate) fn frame<T: Send + Sync, D: Send + Sync>(
+    picker: &mut Picker<T, D>,
+    app: &mut Application,
+) -> Surface {
+    frame_with_config(picker, app, &AppConfig::default())
+}
+
+pub(crate) fn frame_with_config<T: Send + Sync, D: Send + Sync>(
+    picker: &mut Picker<T, D>,
+    app: &mut Application,
+    config: &AppConfig,
+) -> Surface {
     let updates = tokio::sync::mpsc::unbounded_channel().0;
     let mut jobs = Jobs::new();
     let mut cx = Context {
         config: crate::config::Context {
-            current: &config,
+            current: config,
             updates: &updates,
         },
         editor: &mut app.editor,
@@ -51,7 +70,9 @@ pub(crate) fn draw<T: Send + Sync, D: Send + Sync>(
         is_cursor_owner: true,
     };
     let area = Rect::new(0, 0, 70, 20);
-    picker.render(area, &mut Surface::empty(area), &mut cx);
+    let mut surface = Surface::empty(area);
+    picker.render(area, &mut surface, &mut cx);
+    surface
 }
 
 pub(crate) async fn until<T: Send + Sync, D: Send + Sync>(
@@ -73,7 +94,8 @@ pub(crate) async fn until<T: Send + Sync, D: Send + Sync>(
 }
 
 pub(crate) fn is_settled<T: Send + Sync, D: Send + Sync>(picker: &mut Picker<T, D>) -> bool {
-    !picker.dynamic_query_pending
+    !picker.replacement_pending()
+        && !picker.dynamic_query_pending
         && !picker.query_refresh
         && !picker.results.is_refreshing()
         && picker

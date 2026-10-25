@@ -376,10 +376,46 @@ fn global_search_picker(
             },
         })
     })
-    .with_replacement(|cx, items, query, replacement, replace_all, config| {
-        let search = ::search::Search::new(query, !config.case_sensitive.load(Ordering::Relaxed))?;
-        cx.editor
-            .replace_workspace_matches(&search, items, replacement, replace_all)
+    .with_replacement(|editor, request, config| {
+        use crate::ui::picker::{ReplacementStep, ReplacementTask};
+        let search = ::search::Search::new(
+            request.query,
+            !config.case_sensitive.load(Ordering::Relaxed),
+        )?;
+        let replacement = view::editor::WorkspaceReplacement::new(
+            editor,
+            search,
+            request.matches,
+            request.replacement,
+            request.replace_all,
+            request.cancel,
+        )?;
+        let options: Vec<_> = request.options.iter().map(|item| (*item).clone()).collect();
+        Ok(async move {
+            let plan = replacement.prepare().await?;
+            Ok(ReplacementStep::Apply(Box::new(move |editor| {
+                let pending = plan.apply(editor)?;
+                let task: ReplacementTask<::search::Match> = async move {
+                    let mut outcome = pending.finish().await;
+                    let mut refreshed = Vec::new();
+                    for item in options {
+                        if let Some(rows) = outcome.rows.get_mut(&item.path) {
+                            refreshed.append(rows);
+                        } else {
+                            refreshed.push(item);
+                        }
+                    }
+                    Ok(ReplacementStep::Complete {
+                        count: outcome.count,
+                        options: refreshed,
+                        error: outcome.error,
+                    })
+                }
+                .boxed();
+                Ok(task)
+            })))
+        }
+        .boxed())
     })
     .with_case_sensitive_toggle(initial_case_sensitive, |config, enabled| {
         config.case_sensitive.store(enabled, Ordering::Relaxed);
