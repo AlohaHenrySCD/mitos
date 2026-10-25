@@ -35,6 +35,7 @@ impl Document {
         match self.view_states.entry(view) {
             std::collections::hash_map::Entry::Occupied(mut state) => {
                 let state = state.get_mut();
+                state.search.clear_position();
                 if state.selection != selection {
                     state.expansion_history.clear();
                 }

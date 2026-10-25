@@ -1,11 +1,11 @@
 //! Buffer search coordination without prompts or status messages.
 
+use crate::features::buffer_search::Query;
 use crate::Editor;
 use editor_core::{
     movement::{Direction, Movement},
     search,
 };
-use stdx::rope;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SearchOutcome {
@@ -18,13 +18,15 @@ impl Editor {
     /// at the first missing match and center the final cursor once.
     pub fn search_buffer(
         &mut self,
-        regex: &rope::Regex,
+        query: &Query,
         movement: Movement,
         direction: Direction,
         count: usize,
         wrap: bool,
     ) -> SearchOutcome {
-        let padding = self.config().scroll.padding;
+        let config = self.config();
+        let padding = config.scroll.padding;
+        let handler = self.handlers.buffer_search.clone();
         let (view, doc) = current!(self);
         let mut outcome = SearchOutcome::NotFound;
         let mut wrapped = false;
@@ -34,7 +36,7 @@ impl Editor {
             let Some(found) = search::find_regex(
                 doc.text().slice(..),
                 selection.primary(),
-                regex,
+                query.regex(),
                 direction,
                 wrap,
             ) else {
@@ -54,6 +56,12 @@ impl Editor {
         }
         if changed {
             view.ensure_cursor_in_view_center(doc, padding);
+        }
+        if changed && config.statusline.shows_search_position() {
+            let range = doc.selection(view.id).primary();
+            handler.request(doc, view.id, query, range, config.search.match_limit());
+        } else if let Some(state) = doc.search_state_mut(view.id) {
+            state.clear_position();
         }
         outcome
     }

@@ -1,3 +1,5 @@
+pub mod statistics;
+
 use crate::movement::Direction;
 use crate::{Range, RopeSlice, Selection};
 use stdx::rope::RopeExt as _;

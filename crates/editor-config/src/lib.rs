@@ -702,6 +702,15 @@ impl Default for LspReferencesConfig {
     }
 }
 
+/// A TOML value that is either `"none"` or a value of type `T`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub enum OptionToml<T> {
+    None,
+    #[serde(untagged)]
+    Some(T),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 pub struct SearchConfig {
@@ -709,6 +718,8 @@ pub struct SearchConfig {
     pub smart_case: bool,
     /// Whether search and change navigation wrap at document boundaries. Defaults to true.
     pub wrap_around: bool,
+    /// Maximum counted matches. The time budget still applies with `"none"`.
+    pub max_matches: OptionToml<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -842,6 +853,9 @@ pub enum StatusLineElement {
 
     /// Indicator for selected register
     Register,
+
+    /// Search match position and count.
+    SearchPosition,
 
     /// The base of current working directory
     CurrentWorkingDirectory,
@@ -1222,11 +1236,28 @@ impl Default for Config {
     }
 }
 
+impl SearchConfig {
+    pub fn match_limit(&self) -> Option<usize> {
+        match self.max_matches {
+            OptionToml::None => None,
+            OptionToml::Some(limit) => Some(limit),
+        }
+    }
+}
+
+impl StatusLineConfig {
+    pub fn shows_search_position(&self) -> bool {
+        self.left.contains(&StatusLineElement::SearchPosition)
+            || self.right.contains(&StatusLineElement::SearchPosition)
+    }
+}
+
 impl Default for SearchConfig {
     fn default() -> Self {
         Self {
             wrap_around: true,
             smart_case: true,
+            max_matches: OptionToml::Some(100),
         }
     }
 }
@@ -1733,5 +1764,28 @@ mod tests {
             config.diagnostics.inline.other_lines,
             DiagnosticFilter::Disable
         );
+    }
+
+    #[test]
+    fn search_limit_and_statusline_configuration_round_trip() {
+        for (source, limit) in [
+            ("max-matches = 42", Some(42)),
+            ("max-matches = 'none'", None),
+            ("max-matches = 0", Some(0)),
+            ("", Some(100)),
+        ] {
+            let config: Config = toml::from_str(&format!(
+                "[search]\n{source}\n[statusline]\nright = ['search-position', 'position']"
+            ))
+            .unwrap();
+            assert_eq!(config.search.match_limit(), limit);
+            assert!(config.statusline.shows_search_position());
+            let serialized = toml::to_string(&config).unwrap();
+            assert_eq!(toml::from_str::<Config>(&serialized).unwrap(), config);
+        }
+        for value in ["-1", "'unlimited'", "true", "1.5"] {
+            assert!(toml::from_str::<Config>(&format!("[search]\nmax-matches = {value}")).is_err());
+        }
+        assert!(!Config::default().statusline.shows_search_position());
     }
 }

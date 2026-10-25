@@ -1,5 +1,6 @@
 use super::icon_span;
 use editor_core::indent::IndentStyle;
+use editor_core::search::statistics::Count;
 use editor_core::{coords_at_pos, encoding, Position};
 
 use lsp_client::lsp::DiagnosticSeverity;
@@ -130,6 +131,7 @@ where
         StatusLineElementID::Spacer => render_spacer,
         StatusLineElementID::Branch => render_branch,
         StatusLineElementID::Register => render_register,
+        StatusLineElementID::SearchPosition => render_search_position,
         StatusLineElementID::CurrentWorkingDirectory => render_cwd,
         StatusLineElementID::CodeActionHint => render_code_action_hint,
         StatusLineElementID::DebugSession => render_debug_session,
@@ -712,6 +714,29 @@ where
     if let Some(reg) = context.editor.selected_register {
         write(context, format!(" reg={} ", reg).into())
     }
+}
+
+fn render_search_position<'a, F>(context: &mut RenderContext<'a>, write: F)
+where
+    F: Fn(&mut RenderContext<'a>, Span<'a>) + Copy,
+{
+    let Some(position) = context.doc.search_position(context.view.id) else {
+        return;
+    };
+    let count = |value, unknown: &str| match value {
+        Count::Exact(n) => n.to_string(),
+        Count::MoreThan(n) => format!(">{n}"),
+        Count::Unknown => unknown.to_owned(),
+    };
+    write(
+        context,
+        format!(
+            " [{}/{}] ",
+            count(position.current, "?"),
+            count(position.total, "??")
+        )
+        .into(),
+    );
 }
 
 fn render_file_indent_style<'a, F>(context: &mut RenderContext<'a>, write: F)
