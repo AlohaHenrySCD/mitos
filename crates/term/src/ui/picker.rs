@@ -610,14 +610,36 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> Picker<T, D> {
         }
     }
 
-    /// Move the cursor down by exactly one page. After the last page comes the first page.
-    pub fn page_up(&mut self) {
-        self.move_by(self.completion_height as u32, Direction::Backward);
+    /// Move the cursor and the offset by a page, either down (`Forward`) or up (`Backward`)
+    pub fn page_by(&mut self, direction: Direction) {
+        let len = self.results.matcher.snapshot().matched_item_count();
+
+        if len == 0 {
+            // No results, can't move.
+            return;
+        }
+        let page_size = u32::from(self.completion_height);
+        let max_offset = len.saturating_sub(page_size);
+        let offset = self.results.offset;
+        let row = self.results.cursor - offset;
+
+        self.results.offset = match direction {
+            Direction::Forward if offset == max_offset => 0,
+            Direction::Forward => offset.saturating_add(page_size).min(max_offset),
+            Direction::Backward if offset == 0 => max_offset,
+            Direction::Backward => offset.saturating_sub(page_size),
+        };
+        self.results.cursor = (self.results.offset + row).min(len - 1);
     }
 
     /// Move the cursor up by exactly one page. After the first page comes the last page.
+    pub fn page_up(&mut self) {
+        self.page_by(Direction::Backward);
+    }
+
+    /// Move the cursor down by exactly one page. After the last page comes the first page.
     pub fn page_down(&mut self) {
-        self.move_by(self.completion_height as u32, Direction::Forward);
+        self.page_by(Direction::Forward);
     }
 
     /// Move the cursor to the first entry
